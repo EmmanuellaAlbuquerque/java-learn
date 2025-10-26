@@ -1,5 +1,6 @@
 package com.learn.java.infra.security;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -12,7 +13,11 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
-public class SecurityCustomForm {
+public class RememberMeConfigurations {
+
+    // TODO: application.properties - app.remember.me.secret=${REMEMBER_ME_SECRET}
+    @Value("${app.remember.me.secret}")
+    private String rememberMeSecretKey;
 
     @Bean
     public UserDetailsService registeredUsersInMemoryForm() {
@@ -23,11 +28,11 @@ public class SecurityCustomForm {
     }
 
     /**
-     * Modifica login e logout padrão do Security
-     * <a href="https://docs.spring.io/spring-security/reference/servlet/authentication/logout.html#logout-java-configuration">...</a>
+     * JSESSIONID: Ativo enquanto o navegador está aberto
+     * Cookie remember-me: padrão de duração de 2 semanas
      * @param http HttpSecurity
      * @return SecurityFilterChain
-     * @throws Exception Throws by authorizeHttpRequests()
+     * @throws Exception Exception
      */
     @Bean
     public SecurityFilterChain securityFilter(HttpSecurity http) throws Exception {
@@ -36,14 +41,18 @@ public class SecurityCustomForm {
                     req.requestMatchers("/css/**", "/js/**", "assets/**").permitAll();
                     req.anyRequest().authenticated();
                 })
-                .formLogin(form -> form.loginPage("/login") // Login Filter
-                    .defaultSuccessUrl("/dashboard")
-                    .permitAll()
+                .formLogin(form -> form.loginPage("/login")
+                        .defaultSuccessUrl("/dashboard")
+                        .permitAll()
                 )
-                .logout(logout -> logout  // Logout Filter
+                .logout(logout -> logout
                         .logoutSuccessUrl("/login?logout")
                         .permitAll()
                 )
-        .build();
+                .rememberMe(rememberMe -> rememberMe.key(rememberMeSecretKey)
+                    .alwaysRemember(true)
+                    // .tokenValiditySeconds(1800) // 30min
+                )
+                .build();
     }
 }

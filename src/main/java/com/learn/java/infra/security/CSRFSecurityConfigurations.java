@@ -2,6 +2,7 @@ package com.learn.java.infra.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.User;
@@ -12,7 +13,7 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
-public class SecurityCustomForm {
+public class CSRFSecurityConfigurations {
 
     @Bean
     public UserDetailsService registeredUsersInMemoryForm() {
@@ -23,11 +24,11 @@ public class SecurityCustomForm {
     }
 
     /**
-     * Modifica login e logout padrão do Security
-     * <a href="https://docs.spring.io/spring-security/reference/servlet/authentication/logout.html#logout-java-configuration">...</a>
+     * CSRF: Cross-site Request Forgery - Requisição forjada entre sites
+     * No Thymeleaf o input hidden para o csrf é criado automaticamente
      * @param http HttpSecurity
      * @return SecurityFilterChain
-     * @throws Exception Throws by authorizeHttpRequests()
+     * @throws Exception Exception
      */
     @Bean
     public SecurityFilterChain securityFilter(HttpSecurity http) throws Exception {
@@ -36,14 +37,15 @@ public class SecurityCustomForm {
                     req.requestMatchers("/css/**", "/js/**", "assets/**").permitAll();
                     req.anyRequest().authenticated();
                 })
-                .formLogin(form -> form.loginPage("/login") // Login Filter
-                    .defaultSuccessUrl("/dashboard")
-                    .permitAll()
+                .formLogin(form -> form.loginPage("/login")
+                        .defaultSuccessUrl("/dashboard")
+                        .permitAll()
                 )
-                .logout(logout -> logout  // Logout Filter
+                .logout(logout -> logout
                         .logoutSuccessUrl("/login?logout")
                         .permitAll()
                 )
-        .build();
+                .csrf(Customizer.withDefaults()) // Já vem habilitado por default
+                .build();
     }
 }
